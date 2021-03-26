@@ -25,7 +25,7 @@ res = [512, 1024, 2048]
 masses = [res512, res1024, res2048]
 colors = ["steelblue", "darkslategray", "lightsteelblue"]
 
-nbins = 100
+nbins = 150
 
 def cell_vol_kpc(res):
     return (10.0 / float(res)) ** 3
@@ -36,9 +36,8 @@ for i, r in enumerate(res):
                  color=colors[i])
 
     plt.yscale("log")
-    plt.xlabel("Cloud Mass" + r"$~[\log M_\odot]$", fontsize=16)
+    plt.xlabel("Cloud Mass" + r"$~[M_\odot]$", fontsize=16)
     plt.ylabel("N", fontsize=16)
-    #plt.title(f"CGOLS Cloud Masses R={r}")
     plt.savefig(f"../figures/massdist{r}.pdf")
     plt.close()
 
@@ -52,9 +51,8 @@ bins = [bins512, bins1024, bins2048]
 patches = [patches512, patches1024, patches2048]
 
 plt.yscale("log")
-plt.xlabel("Cloud Mass" + r"$~[\log M_\odot]$", fontsize=16)
+plt.xlabel("Cloud Mass" + r"$~[M_\odot]$", fontsize=16)
 plt.ylabel("N", fontsize=16)
-#plt.title(f"CGOLS Cloud Masses")
 plt.legend()
 plt.savefig(f"../figures/massdist.pdf")
 plt.close()
@@ -65,9 +63,8 @@ for i, r in enumerate(n):
     mass = 10 ** x
     plt.loglog(mass, mass * n[i], label=f"$R={res[i]}$", color=colors[i])
     plt.legend()
-    plt.ylabel("Total Mass" + r"$~[\log M_\odot]$")
-    plt.xlabel("Mass" + r"$~[\log M_\odot]$")
-    #plt.title("CGOLS Cloud Masses")
+    plt.ylabel("Total Mass" + r"$~[M_\odot]$")
+    plt.xlabel("Cloud Mass" + r"$~[M_\odot]$", fontsize=16)
 
 plt.savefig(f"../figures/totalmassdist.pdf")
 
