@@ -25,6 +25,8 @@ res = [512, 1024, 2048]
 masses = [res512, res1024, res2048]
 colors = ["steelblue", "darkslategray", "lightsteelblue"]
 
+nbins = 100
+
 def cell_vol_kpc(res):
     return (10.0 / float(res)) ** 3
 
