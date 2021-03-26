@@ -18,14 +18,38 @@ plt.rcParams.update({'ytick.minor.width': 1.25 })
 
 res512, res1024, res2048 = np.load("../data/jeff.npy", allow_pickle=True)
 
+res = [512, 1024, 2048]
+masses = [res512, res1024, res2048]
+colors = ["steelblue", "darkslategray", "lightsteelblue"]
+
 def cell_vol_kpc(res):
     return (10.0 / float(res)) ** 3
 
-n, bins, patches = plt.hist(np.log10(res2048 * cell_vol_kpc(2048)), bins=100,
-                            color="steelblue")
+for i, r in enumerate(res):
+    plt.figure(figsize=(10, 8))
+    _ = plt.hist(np.log10(masses[i] * cell_vol_kpc(r)), bins=100,
+                 color=colors[i])
+
+    plt.yscale("log")
+    plt.xlabel("Cloud Mass" + r"$~[\log M_\odot]$", fontsize=16)
+    plt.ylabel("N", fontsize=16)
+    plt.title(f"Distribution of Cloud Masses R={r}")
+    plt.savefig(f"../figures/massdist{r}.pdf")
+    plt.show()
+
+plt.figure(figsize=(10, 8))
+_ = plt.hist(np.log10(res2048 * cell_vol_kpc(r)), bins=100, color=colors[2],
+             label=r"$R={2048}$")
+_ = plt.hist(np.log10(res1024 * cell_vol_kpc(r)), bins=100, color=colors[1],
+             label=r"$R={1024}$")
+_ = plt.hist(np.log10(res512 * cell_vol_kpc(r)), bins=100, color=colors[0],
+             label=r"$R={512}$")
+
+
 plt.yscale("log")
-plt.xlabel("Cloud Mass" + r"$~[M_\odot]$", fontsize=16)
+plt.xlabel("Cloud Mass" + r"$~[\log M_\odot]$", fontsize=16)
 plt.ylabel("N", fontsize=16)
-plt.title("Distribution of Cloud Masses")
+plt.title(f"Distribution of Cloud Masses")
+plt.legend()
+plt.savefig(f"../figures/massdist.pdf")
 plt.show()
-plt.savefig("../figures/massdist.pdf")
