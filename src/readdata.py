@@ -32,7 +32,7 @@ def cell_vol_kpc(res):
 
 for i, r in enumerate(res):
     plt.figure(figsize=(10, 8))
-    _ = plt.hist(np.log10(masses[i] * cell_vol_kpc(r)), bins=100,
+    _ = plt.hist(np.log10(masses[i] * cell_vol_kpc(r)), bins=nbins,
                  color=colors[i])
 
     plt.yscale("log")
@@ -40,12 +40,12 @@ for i, r in enumerate(res):
     plt.ylabel("N", fontsize=16)
     plt.title(f"CGOLS Cloud Masses R={r}")
     plt.savefig(f"../figures/massdist{r}.pdf")
-    # plt.show()
+    plt.close()
 
 plt.figure(figsize=(10, 8))
-n2048, bins2048, patches2048 = plt.hist(np.log10(res2048 * cell_vol_kpc(res[2])), bins=100, color=colors[2], label=r"$R={2048}$")
-n1024, bins1024, patches1024 = plt.hist(np.log10(res1024 * cell_vol_kpc(res[1])), bins=100, color=colors[1], label=r"$R={1024}$")
-n512, bins512, patches512 = plt.hist(np.log10(res512 * cell_vol_kpc(res[0])), bins=100, color=colors[0], label=r"$R={512}$")
+n2048, bins2048, patches2048 = plt.hist(np.log10(res2048 * cell_vol_kpc(res[2])), bins=nbins, color=colors[2], label=r"$R={2048}$")
+n1024, bins1024, patches1024 = plt.hist(np.log10(res1024 * cell_vol_kpc(res[1])), bins=nbins, color=colors[1], label=r"$R={1024}$")
+n512, bins512, patches512 = plt.hist(np.log10(res512 * cell_vol_kpc(res[0])), bins=nbins, color=colors[0], label=r"$R={512}$")
 
 n = [n512, n1024, n2048]
 bins = [bins512, bins1024, bins2048]
@@ -57,18 +57,18 @@ plt.ylabel("N", fontsize=16)
 plt.title(f"CGOLS Cloud Masses")
 plt.legend()
 plt.savefig(f"../figures/massdist.pdf")
-# plt.show()
+plt.close()
 
 fig = plt.figure(figsize=(10, 8))
 for i, r in enumerate(n):
-    plt.semilogy(bins[i][1:], bins[i][1:] * n[i], label=f"$R={res[i]}$",
+    plt.semilogy(bins[i][:-1], bins[i][:-1] * n[i], label=f"$R={res[i]}$",
                  color=colors[i])
     plt.legend()
     plt.ylabel("Total Mass" + r"$~[\log M_\odot]$")
-    plt.xlabel("Mass" + r"$~[\log M_\odot]$")
+    plt.xlabel("Mass" + r"$~[M_\odot]$")
+    plt.xlim(-1, 7)
     plt.title("CGOLS Cloud Masses")
 
 plt.savefig(f"../figures/totalmassdist.pdf")
-
 
 plt.show()
