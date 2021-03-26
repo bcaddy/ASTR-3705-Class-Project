@@ -38,7 +38,7 @@ for i, r in enumerate(res):
     plt.yscale("log")
     plt.xlabel("Cloud Mass" + r"$~[\log M_\odot]$", fontsize=16)
     plt.ylabel("N", fontsize=16)
-    plt.title(f"CGOLS Cloud Masses R={r}")
+    #plt.title(f"CGOLS Cloud Masses R={r}")
     plt.savefig(f"../figures/massdist{r}.pdf")
     plt.close()
 
@@ -54,7 +54,7 @@ patches = [patches512, patches1024, patches2048]
 plt.yscale("log")
 plt.xlabel("Cloud Mass" + r"$~[\log M_\odot]$", fontsize=16)
 plt.ylabel("N", fontsize=16)
-plt.title(f"CGOLS Cloud Masses")
+#plt.title(f"CGOLS Cloud Masses")
 plt.legend()
 plt.savefig(f"../figures/massdist.pdf")
 plt.close()
@@ -66,8 +66,8 @@ for i, r in enumerate(n):
     plt.loglog(mass, mass * n[i], label=f"$R={res[i]}$", color=colors[i])
     plt.legend()
     plt.ylabel("Total Mass" + r"$~[\log M_\odot]$")
-    plt.xlabel("Mass" + r"$~[M_\odot]$")
-    plt.title("CGOLS Cloud Masses")
+    plt.xlabel("Mass" + r"$~[\log M_\odot]$")
+    #plt.title("CGOLS Cloud Masses")
 
 plt.savefig(f"../figures/totalmassdist.pdf")
 
