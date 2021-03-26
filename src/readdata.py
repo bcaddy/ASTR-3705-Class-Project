@@ -61,14 +61,14 @@ plt.close()
 
 fig = plt.figure(figsize=(10, 8))
 for i, r in enumerate(n):
-    plt.semilogy(bins[i][1:], bins[i][1:] * n[i], label=f"$R={res[i]}$",
-                 color=colors[i])
+    x = (bins[i][1:] + bins[i][:-1]) / 2
+    mass = 10 ** x
+    plt.semilogy(mass, mass * n[i], label=f"$R={res[i]}$", color=colors[i])
     plt.legend()
     plt.ylabel("Total Mass" + r"$~[\log M_\odot]$")
     plt.xlabel("Mass" + r"$~[M_\odot]$")
-    plt.xlim(-1, 7)
+    # plt.xlim(-1, 7)
     plt.title("CGOLS Cloud Masses")
-
 
 plt.savefig(f"../figures/totalmassdist.pdf")
 
