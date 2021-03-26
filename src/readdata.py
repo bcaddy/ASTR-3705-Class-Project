@@ -66,5 +66,7 @@ for i, r in enumerate(n):
     plt.xlabel("Mass" + r"$~[\log M_\odot]$")
     plt.title("CGOLS Cloud Masses")
 
+plt.savefig(f"../figures/totalmassdist.pdf")
+
 
 plt.show()
