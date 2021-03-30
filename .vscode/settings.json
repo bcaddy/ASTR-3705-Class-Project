@@ -1,5 +1,11 @@
 {
     "cSpell.words": [
-        "CGOLS"
-    ]
+        "CGOLS",
+        "Mstar",
+        "dbin",
+        "mpicloud",
+        "odict",
+        "suni"
+    ],
+    "python.pythonPath": "/ihome/crc/install/python/anaconda3.8-2020.11/bin/python"
 }

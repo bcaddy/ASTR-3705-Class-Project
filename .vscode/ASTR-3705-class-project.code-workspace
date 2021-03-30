@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../class-project-data"
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"dbin",
+			"odict"
+		]
+	}
+}
