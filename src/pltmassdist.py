@@ -61,11 +61,24 @@ fig = plt.figure(figsize=(10, 8))
 for i, r in enumerate(n):
     x = (bins[i][1:] + bins[i][:-1]) / 2
     mass = 10 ** x
-    plt.loglog(mass, mass * n[i], label=f"$R={res[i]}$", color=colors[i])
+    plt.step(mass, mass * n[i], label=f"$R={res[i]}$", color=colors[i])
+    plt.xscale("log")
+    plt.yscale("log")
     plt.legend()
     plt.ylabel("Total Mass" + r"$~[M_\odot]$")
     plt.xlabel("Cloud Mass" + r"$~[M_\odot]$", fontsize=16)
 
 plt.savefig(f"../figures/totalmassdist.pdf")
 
-plt.show()
+for i, r in enumerate(n):
+    fig = plt.figure(figsize=(10, 8))
+    x = (bins[i][1:] + bins[i][:-1]) / 2
+    mass = 10 ** x
+    plt.step(mass, mass * n[i], label=f"$R={res[i]}$", color=colors[i])
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.legend()
+    plt.ylabel("Total Mass" + r"$~[M_\odot]$")
+    plt.xlabel("Cloud Mass" + r"$~[M_\odot]$", fontsize=16)
+    plt.savefig(f"../figures/totalmassdist{res[i]}.pdf")
+    plt.close()
