@@ -12,6 +12,7 @@ simulations.
 * scipy >= 1.5.2
 * h5py >= 2.10.0
 * HDF5 >= 1.10.2
+* emcee >= 2.2.1
 
 ## Summary
 tbd
