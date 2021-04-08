@@ -17,6 +17,9 @@ plt.rcParams.update({'ytick.major.width': 1.25 })
 plt.rcParams.update({'ytick.minor.size': 2.5})
 plt.rcParams.update({'ytick.minor.width': 1.25 })
 
+# this isn't quite right yet
+# need initial guesses for different resolutions of cloud data
+
 os.chdir(os.path.dirname(__file__))
 
 res512, res1024, res2048 = np.load("../data/masses.npy", allow_pickle=True)
