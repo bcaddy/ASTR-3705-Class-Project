@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 # ==============================================================================
 # Settings
 maxSamples = 20000  # Choose the number of clouds to select from each catalog
-n_jobs = 20
+n_jobs = 8
 
 featureColumns = ['volume','mass','rPosition','vMag', 'polarAngle']
 
@@ -74,7 +74,7 @@ def converter(catalog):
 
 # ==============================================================================
 def learnAndPlot(catalog, perp):
-
+    print(f"started res={catalog['resolution'].iloc[1]}, perp={perp}")
     # Make data only dataframe
     catalogData  = catalog[featureColumns].values
 
@@ -146,9 +146,9 @@ def main():
 
     # Do the dimensionality reduction and generating figures
     Parallel(n_jobs=n_jobs)(delayed(learnAndPlot)
-                                   (sampleData[i], perps[j])
-                                   for i in range(len(sampleData))
-                                   for j in range(len(perps)))
+                                   (sampleData[j], perps[i])
+                                   for i in range(len(perps))
+                                   for j in range(len(sampleData)))
 
     print(f'\nTime to execute: {round(default_timer()-start,2)} seconds')
 # ==============================================================================
