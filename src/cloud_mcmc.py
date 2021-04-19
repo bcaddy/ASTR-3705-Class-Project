@@ -76,40 +76,76 @@ plt.yscale("log")
 plt.legend()
 plt.show()
 
-# this isn't quite working yet
-# need to figure out what condiditons to put on lnprior
-def model(theta, mass=mass):
-    A, mpeak, a1, a2, delta = theta
-    return A * (mass / mpeak) ** (-a1) * (0.5 * (1 + (mass / mpeak) ** (1 / delta))) ** ((a1 - a2) / delta)
+def model(mass, theta):
+    """Broken power law model with 4 free parameters used to model the
+    behavior of the cloud mass probability distribution.
+    """
+    mpeak, a1, a2, delta = theta
+    return (mass / mpeak) ** (-a1) * (0.5 * (1 + (mass / mpeak) ** (1 / delta))) ** ((a1 - a2) * delta)
 
-def lnlike(theta, x, y, yerr):
-    A, mpeak, a1, a2, delta = theta
-    return - (1 / 2) * np.sum(y - model(theta) / yerr) ** 2
+def mod_sq(mass, theta):
+    # function to integrate to normalize PDF
+    return ((mass / mpeak) ** (-a1) * (0.5 * (1 + (mass / mpeak) ** (1 / delta))) ** ((a1 - a2) * delta)) ** 2
 
+def lnlike(theta, mass, dist, xmin):
+    """Compute the likelihood of the data given the model.
+    
+    mod is the model.
+    mass is the mass bins.
+    dist is the number of clouds per mass bin.
+    xmin is the minimum value of mass for which the power law behavior holds.
+    
+    ATM: normalization is bunk and not sure if likelihood is correct
+    """
+    mpeak, a1, a2, delta = theta
+    # calculate broken power-law model for the current set of parameters
+    mod = model(mass, theta)
+    A_sq = quad(model, xmin, np.inf, args=(theta))[0]
+    likenorm = mod / np.sqrt(A_sq)
+    # calculate the likelihood
+    likelihood = np.sum(np.log(likenorm))
+    if not np.isfinite(likelihood):
+            return -np.inf
+    return likelihood
+
+a1low, a1up = -1000, -1e-9
+a2low, a2up = 1e-9, 1000
+mpeaklow, mpeakup = 1e-9, 1000
+deltalow, deltaup = 1e-9, 1000
 def lnprior(theta):
-    A, mpeak, a1, a2, delta = theta
-    if conditions:
-        return 0.0
-    else:
+    mpeak, a1, a2, delta = theta
+    if not (a1 >= a1low, a1 <= a1up):
         return -np.inf
+    if not (a2 >= a2low, a2 <= a2up):
+        return -np.inf
+    if not (mpeak >= mpeaklow, mpeak <= mpeakup):
+        return -np.inf
+    if not (delta >= deltalow, delta <= deltaup):
+        return -np.inf
+    # assume a flat prior
+    return 0.0
 
-def lnprob(theta, x, y, yerr):
-    A, mpeak, a1, a2, delta = theta
-    lp = lnprior(theta, x, y, yerr)
+def lnprob(theta, mass, dist, xmin):
+    mpeak, a1, a2, delta = theta
+    lp = lnprior(theta)
     if not np.isfinite(lp):
-        return - np.inf
-    return lp + lnlike(theta, x, y, yerr)
+            return -np.inf
+    return lp + lnlike(theta, mass, dist, xmin)
 
 
-nerr = 0.05 * n[2]
-data = (mass, n[2], nerr)
+x2048 = (bins2048[1:] + bins2048[:-1]) / 2.
+mass2048 = 10 ** x2048
+n_norm = [float(i) / sum(n2048[36:]) for i in n2048[36:]]
+
+# mass bins, number of clouds, xmin
+data = (mass2048[36:], n_norm, 1)
 nwalkers = 1000
 niter = 100
-initial = np.array([An[2], mpeakn[2], a1n[2], a2n[2], deltan[2]])
-ndim = len(initial)
-p0 = [np.array(initial) + 1e-7 * np.random.randn(ndim) for i in range(nwalkers)]
+# mpeak, a1, a2, delta
+theta0 = np.array([20, -0.5, 0.5, 1])
+ndim = len(theta0)
+p0 = [np.array(theta0) + 1e-7 * np.random.randn(ndim) for i in range(nwalkers)]
 
-# function that uses emcee to actually implement MCMC on the data
 def main(p0, nwalkers, niter, ndim, lnprob, data):
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=data)
 
@@ -124,14 +160,13 @@ def main(p0, nwalkers, niter, ndim, lnprob, data):
 
 sampler, pos, prob, state = main(p0, nwalkers, niter, ndim, lnprob, data)
 
-def plotter(sampler, mass=mass, n=n[2]):
-    plt.ion()
-    plt.plot(age,T,label='Change in T')
+def plotter(sampler, mass=mass2048[36:], n=n_norm):
+    plt.loglog(mass, n)
     samples = sampler.flatchain
     for theta in samples[np.random.randint(len(samples), size=100)]:
-        plt.plot(age, model(theta, age), color="r", alpha=0.1)
-    plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    plt.xlabel('Years ago')
-    plt.ylabel(r'$\Delta$ T (degrees)')
-    plt.legend()
+        plt.loglog(mass, model(mass, theta), color="r", alpha=0.1)
+    plt.xlabel(r"Mass$~[M_\odot]$")
+    plt.ylabel("N Clouds")
     plt.show()
+    
+plotter(sampler)
