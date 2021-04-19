@@ -134,9 +134,9 @@ def main():
         numSamples = maxSamples
     print(f'Number of samples is {numSamples}')
 
-    subset512  = processed512.sample(n=numSamples)
-    subset1024 = processed1024.sample(n=numSamples)
-    subset2048 = processed2048.sample(n=numSamples)
+    subset512  = processed512.sample(n=numSamples, replace=False)
+    subset1024 = processed1024.sample(n=numSamples, replace=False)
+    subset2048 = processed2048.sample(n=numSamples, replace=False)
 
     # Choose perplexity values
     perps = np.arange(10, 110, 10)
