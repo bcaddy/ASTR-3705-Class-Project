@@ -83,25 +83,14 @@ def model(mass, theta):
     mpeak, a1, a2, delta = theta
     return (mass / mpeak) ** (-a1) * (0.5 * (1 + (mass / mpeak) ** (1 / delta))) ** ((a1 - a2) * delta)
 
-def mod_sq(mass, theta):
-    # function to integrate to normalize PDF
-    return ((mass / mpeak) ** (-a1) * (0.5 * (1 + (mass / mpeak) ** (1 / delta))) ** ((a1 - a2) * delta)) ** 2
-
 def lnlike(theta, mass, dist, xmin):
     """Compute the likelihood of the data given the model.
-    
-    mod is the model.
-    mass is the mass bins.
-    dist is the number of clouds per mass bin.
-    xmin is the minimum value of mass for which the power law behavior holds.
-    
-    ATM: normalization is bunk and not sure if likelihood is correct
     """
     mpeak, a1, a2, delta = theta
     # calculate broken power-law model for the current set of parameters
     mod = model(mass, theta)
-    A_sq = quad(model, xmin, np.inf, args=(theta))[0]
-    likenorm = mod / np.sqrt(A_sq)
+    A = quad(model, 1, np.inf, args=theta)[0]
+    likenorm = mod / A
     # calculate the likelihood
     likelihood = np.sum(np.log(likenorm))
     if not np.isfinite(likelihood):
@@ -134,11 +123,11 @@ def lnprob(theta, mass, dist, xmin):
 
 
 x2048 = (bins2048[1:] + bins2048[:-1]) / 2.
-mass2048 = 10 ** x2048
-n_norm = [float(i) / sum(n2048[36:]) for i in n2048[36:]]
+mass2048 = 10 ** x2048[36:]
+n_norm = n2048[36:] / np.sum(n2048[36:])
 
 # mass bins, number of clouds, xmin
-data = (mass2048[36:], n_norm, 1)
+data = (mass2048, n_norm, 1)
 nwalkers = 1000
 niter = 100
 # mpeak, a1, a2, delta
@@ -160,13 +149,16 @@ def main(p0, nwalkers, niter, ndim, lnprob, data):
 
 sampler, pos, prob, state = main(p0, nwalkers, niter, ndim, lnprob, data)
 
-def plotter(sampler, mass=mass2048[36:], n=n_norm):
-    plt.loglog(mass, n)
+def plotter(sampler, mass=mass2048, n=n_norm):
+    fig = plt.figure(figsize=(10, 8))
+    plt.loglog(mass, n, label="data")
     samples = sampler.flatchain
     for theta in samples[np.random.randint(len(samples), size=100)]:
         plt.loglog(mass, model(mass, theta), color="r", alpha=0.1)
+    plt.loglog(0, color="r", alpha=0.1, label="MCMC")
     plt.xlabel(r"Mass$~[M_\odot]$")
-    plt.ylabel("N Clouds")
+    plt.ylabel("N Clouds (normalized)")
+    plt.legend()
     plt.show()
     
 plotter(sampler)
