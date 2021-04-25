@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import emcee
+from scipy.integrate import quad
 plt.rcParams.update({'font.size': 18})
 plt.rcParams.update({'font.family': 'serif'})
 plt.rcParams.update({'mathtext.default':'regular'})
@@ -25,18 +26,18 @@ os.chdir(os.path.dirname(__file__))
 
 res512, res1024, res2048 = np.load("../data/masses.npy", allow_pickle=True)
 
+def cell_vol_kpc(res):
+    return (10.0 / float(res)) ** 3
+
 res = 2048
 colors = "lightsteelblue"
 fcolors = "indianred"
 masses = res2048 * cell_vol_kpc(res)
-xmin = 1
+xmin = 0.1
 massind = np.where(masses > xmin)
 masses1 = masses[massind]
 
 nbins = 100
-
-def cell_vol_kpc(res):
-    return (10.0 / float(res)) ** 3
 
 n2048, bins2048, patches2048 = plt.hist(np.log10(masses1), bins=nbins, color=colors, label=r"$R={2048}$")
 plt.xlabel("$\log M_\odot$")
@@ -76,7 +77,7 @@ def lnlike(theta, mass, xmin):
     mpeak, a1, a2, delta = theta
     # calculate broken power-law model for the current set of parameters
     mod = model(mass, theta)
-    A = quad(model, xmin, 10 ** 7, args=theta)[0]
+    A = quad(model, xmin, 10 ** 4, args=theta)[0]
     likenorm = mod / A
     # calculate the likelihood
     likelihood = np.sum(np.log(likenorm))
@@ -84,19 +85,20 @@ def lnlike(theta, mass, xmin):
             return -np.inf
     return likelihood
 
-a1low, a1up = -10, -1e-9
-a2low, a2up = 1e-9, 10
-mpeaklow, mpeakup = 1e-9, 50
-deltalow, deltaup = 1e-9, 10
+
+a1low, a1up = -3, -0.01
+a2low, a2up = 0.01, 3
+mpeaklow, mpeakup = 5, 100
+deltalow, deltaup = 0.1, 5
 def lnprior(theta):
     mpeak, a1, a2, delta = theta
-    if not (a1 >= a1low, a1 <= a1up):
+    if not np.logical_and(a1 >= a1low, a1 <= a1up):
         return -np.inf
-    if not (a2 >= a2low, a2 <= a2up):
+    if not np.logical_and(a2 >= a2low, a2 <= a2up):
         return -np.inf
-    if not (mpeak >= mpeaklow, mpeak <= mpeakup):
+    if not np.logical_and(mpeak >= mpeaklow, mpeak <= mpeakup):
         return -np.inf
-    if not (delta >= deltalow, delta <= deltaup):
+    if not np.logical_and(delta >= deltalow, delta <= deltaup):
         return -np.inf
     # assume a flat prior
     return 0.0
@@ -109,11 +111,11 @@ def lnprob(theta, mass, xmin):
     return lp + lnlike(theta, mass, xmin)
 
 data = (masses1, xmin)
-nwalkers = 100
+nwalkers = 20
 niter = 100
 theta0 = np.array([mpeak, a1, a2, delta])
 ndim = len(theta0)
-p0 = [np.array(theta0) + 1e-7 * np.random.randn(ndim) for i in range(nwalkers)]
+p0 = [np.array(theta0) * (1 + 0.1 * np.random.randn(ndim)) for i in range(nwalkers)]
 
 def main(p0, nwalkers, niter, ndim, lnprob, data):
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=data)
@@ -136,19 +138,40 @@ def plotter(sampler, mass=center_mass, n=n2048):
     """
     fig = plt.figure(figsize=(10, 8))
     data_norm = n2048 / np.sum(n2048)
-    plt.loglog(mass, data_norm, label="Data", color="k")
+    plt.loglog(mass, n2048, label="Data", color="k")
     samples = sampler.flatchain
     # bin width in solar masses
     dM = 10 ** (bins2048[1:] - bins2048[:-1])
-    for theta in samples[np.random.randint(len(samples), size=100)]:
+    mpeaks = []
+    a1s = []
+    a2s = []
+    deltas = []
+    for theta in samples[np.random.randint(len(samples), size=1000)]:
         pM = model(mass, theta)
-        A = quad(model, xmin, 10 ** 7, args=theta)[0]
-        expectation_value = pM * n2048 * dM / A
+        A = quad(model, xmin, 10 ** 4, args=theta)[0]
+        expectation_value = pM * np.sum(n2048) * dM / A
         plt.loglog(mass, expectation_value, c="r", alpha=0.1)
+        mpeaks.append(theta[0])
+        a1s.append(theta[1])
+        a2s.append(theta[2])
+        deltas.append(theta[3])
     plt.plot(0, label="MCMC", color="r")
     plt.legend()
     plt.xlabel("Mass$~[M_\odot]$")
-    plt.ylabel("N (normalized)")
+    plt.ylabel("N")
     plt.show()
+    
+    fig = plt.figure(figsize=(10, 8))
+    plt.hist(mpeaks, label="mpeak", bins=25)
+    plt.legend()
+    fig = plt.figure(figsize=(10, 8))
+    plt.hist(a1s, label="a1", bins=25)
+    plt.legend()
+    fig = plt.figure(figsize=(10, 8))
+    plt.hist(a2s, label="a2", bins=25)
+    plt.legend()
+    fig = plt.figure(figsize=(10, 8))
+    plt.hist(deltas, label="delta", bins=25)
+    plt.legend()
     
 plotter(sampler)
