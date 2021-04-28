@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import emcee
+from scipy.special import hyp2f1
 from scipy.integrate import quad
+from scipy.special import gamma
 plt.rcParams.update({'font.size': 18})
 plt.rcParams.update({'font.family': 'serif'})
 plt.rcParams.update({'mathtext.default':'regular'})
@@ -49,8 +51,7 @@ mpeak = 40
 delta = 1
 A = 3e4
 
-x = (bins2048[1:] + bins2048[:-1]) / 2.
-center_mass = 10 ** x
+center_mass = (10 ** bins2048[1:] + 10 ** bins2048[:-1]) / 2.
 
 fm = A * (center_mass / mpeak) ** (-a1) * (0.5 * (1 + (center_mass / mpeak) ** (1 / delta))) ** ((a1 - a2) / delta)
 
@@ -71,6 +72,16 @@ def model(mass, theta):
     mpeak, a1, a2, delta = theta
     return (mass / mpeak) ** (-a1) * (0.5 * (1 + (mass / mpeak) ** (1 / delta))) ** ((a1 - a2) * delta)
 
+def bpl_analytic(theta, m):
+    # Analtyic form of broken power law integral
+    mpeak, a1, a2, delta = theta
+    coeff1 = 2 ** ((a2 - a1) * delta)
+    coeff2 = (m / mpeak) ** (1 - a1)
+    coeff3 = m + mpeak
+    coeff4 = (((m + mpeak) / mpeak) ** (1 / delta)) ** ((a1 - a2) * delta)
+    coeff = coeff1 * coeff2 * coeff3 * coeff4 * gamma(1 - a1)
+    return coeff * hyp2f1(1, 2 - a2, 2 - a1, -(m / mpeak))
+
 def lnlike(theta, mass, xmin):
     """Compute the likelihood of the data given the model.
     """
@@ -78,13 +89,13 @@ def lnlike(theta, mass, xmin):
     # calculate broken power-law model for the current set of parameters
     mod = model(mass, theta)
     A = quad(model, xmin, 10 ** 4, args=theta)[0]
+    # A = bpl_analytic(theta, mass)
     likenorm = mod / A
     # calculate the likelihood
     likelihood = np.sum(np.log(likenorm))
     if not np.isfinite(likelihood):
             return -np.inf
     return likelihood
-
 
 a1low, a1up = -3, -0.01
 a2low, a2up = 0.01, 3
@@ -132,16 +143,12 @@ def main(p0, nwalkers, niter, ndim, lnprob, data):
 sampler, pos, prob, state = main(p0, nwalkers, niter, ndim, lnprob, data)
 
 def plotter(sampler, mass=center_mass, n=n2048):
-    """
-    mass : center mass of each bin in bins2048 in solar masses
-    n2048 : number of clouds in each bin in bins2048
-    """
     fig = plt.figure(figsize=(10, 8))
     data_norm = n2048 / np.sum(n2048)
     plt.loglog(mass, n2048, label="Data", color="k")
     samples = sampler.flatchain
     # bin width in solar masses
-    dM = 10 ** (bins2048[1:] - bins2048[:-1])
+    dM = (10 ** bins2048[1:] - 10 ** bins2048[:-1])
     mpeaks = []
     a1s = []
     a2s = []
@@ -150,7 +157,7 @@ def plotter(sampler, mass=center_mass, n=n2048):
         pM = model(mass, theta)
         A = quad(model, xmin, 10 ** 4, args=theta)[0]
         expectation_value = pM * np.sum(n2048) * dM / A
-        plt.loglog(mass, expectation_value, c="r", alpha=0.1)
+        plt.loglog(mass, expectation_value, c="r", alpha=0.1, zorder=0)
         mpeaks.append(theta[0])
         a1s.append(theta[1])
         a2s.append(theta[2])
@@ -161,17 +168,40 @@ def plotter(sampler, mass=center_mass, n=n2048):
     plt.ylabel("N")
     plt.show()
     
-    fig = plt.figure(figsize=(10, 8))
-    plt.hist(mpeaks, label="mpeak", bins=25)
-    plt.legend()
-    fig = plt.figure(figsize=(10, 8))
-    plt.hist(a1s, label="a1", bins=25)
-    plt.legend()
-    fig = plt.figure(figsize=(10, 8))
-    plt.hist(a2s, label="a2", bins=25)
-    plt.legend()
-    fig = plt.figure(figsize=(10, 8))
-    plt.hist(deltas, label="delta", bins=25)
-    plt.legend()
-    
 plotter(sampler)
+
+# Implement ML by minimization of -lnprob
+from scipy.optimize import minimize
+
+def minus_lnprob(theta, mass=masses1, xmin=xmin):
+    mpeak, a1, a2, delta = theta
+    lp = lnprior(theta)
+    if not np.isfinite(lp):
+            return -np.inf
+    return -(lp + lnlike(theta, mass, xmin))
+
+params = minimize(minus_lnprob, theta0, bounds=((mpeaklow, mpeakup),
+                                                (a1low, a1up),
+                                                (a2low, a2up),
+                                                (deltalow, deltaup)),
+                  args=(masses1, xmin))
+                  
+def ML_plotter(params, mass=center_mass, n=n2048):
+    fig = plt.figure(figsize=(10, 8))
+    data_norm = n2048 / np.sum(n2048)
+    plt.loglog(mass, n2048, label="Data", color="k")
+    samples = sampler.flatchain
+    # bin width in solar masses
+    dM = (10 ** bins2048[1:] - 10 ** bins2048[:-1])
+    theta = params.x
+    pM = model(mass, theta)
+    A = quad(model, xmin, 10 ** 4, args=theta)[0]
+    expectation_value = pM * np.sum(n2048) * dM / A
+    plt.loglog(mass, expectation_value, c="r")
+    plt.plot(0, label="ML", color="r")
+    plt.legend()
+    plt.xlabel("Mass$~[M_\odot]$")
+    plt.ylabel("N")
+    plt.show()
+
+ML_plotter(params)
