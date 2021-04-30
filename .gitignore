@@ -1,6 +1,6 @@
 # Files specific to this repo #
 ##############################
-
+.ipynb_checkpoints
 
 # Compiled source #
 ###################
@@ -36,6 +36,7 @@ __pycache__
 *.sql
 *.sqlite
 *.npy
+*.pkl
 
 # OS generated files #
 ######################

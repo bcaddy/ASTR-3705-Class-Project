@@ -5,7 +5,11 @@
         "dbin",
         "mpicloud",
         "odict",
-        "suni"
+        "perp",
+        "perps",
+        "skmanifold",
+        "suni",
+        "tsne"
     ],
-    "python.pythonPath": "/ihome/crc/install/python/anaconda3.8-2020.11/bin/python"
+    "python.pythonPath": "/usr/local/bin/python3"
 }
